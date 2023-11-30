@@ -22,10 +22,14 @@ def create_advent_of_code_repo(year):
         with open(os.path.join(day_folder, "input.txt"), "w") as solution:
             pass
 
+        # Add a test file placeholder
+        with open(os.path.join(day_folder, "input.test.txt"), "w") as solution:
+            pass
+
     # Create a utils folder if needed
     os.makedirs(os.path.join(repo_name, "utils"), exist_ok=True)
 
     print(f"Repository structure for Advent of Code {year} created successfully!")
 
 
-create_advent_of_code_repo(2022)
+create_advent_of_code_repo(2023)
