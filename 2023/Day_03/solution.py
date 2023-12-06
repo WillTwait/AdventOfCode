@@ -10,7 +10,6 @@ buffer = []
 for line in lines:
     # add l/r buffers
     line = "." + line + "."
-    print(f"lr: {line}")
     buffer = ["." for _ in range(len(line))]
 
     row = []
@@ -26,67 +25,109 @@ mapped_lines.append(buffer)
 print(mapped_lines)
 
 part_numbers = []
-no_ops = []
+gear_ratios = []
+touched_gears = {}
+gear_ratio_sum = 0
 # iterate through non-buffered region
 for row_number, row in enumerate(mapped_lines[1:-1]):
     # account for offset
     row_number += 1
     is_valid = False
     current_number = ""
+    touched_gears_for_number = set()
+
     # ignore l/r buffers
-    print(f"current: {row}")
     for char_number, char in enumerate(row[1:-1]):
         char_number += 1
         if char.isdigit():
             current_number += char
-            print(f"appended: {current_number} with {is_valid}")
 
             # check if valid above
-            if not is_valid:
-                row_above = mapped_lines[row_number - 1]
-                for char in row_above[char_number - 1 : char_number + 2]:
-                    if not char.isdigit() and char != ".":
-                        is_valid = True
+            row_above = mapped_lines[row_number - 1]
+            for col, char in enumerate(row_above[char_number - 1 : char_number + 2]):
+                absolute_row = row_number - 2
+                absolute_col = col + char_number - 1
+                coord = (absolute_row, absolute_col)
+                if not char.isdigit() and char != ".":
+                    if char == "*":
+                        print(
+                            f"char at: {(absolute_row, absolute_col)} for {current_number}, appending in above"
+                        )
+                        touched_gears_for_number.add(coord)
+                    is_valid = True
 
             # check if valid below
-            if not is_valid:
-                row_below = mapped_lines[row_number + 1]
-                print(f"row below: {row_below}")
-                for char in row_below[char_number - 1 : char_number + 2]:
-                    print(f"loc: {char_number}")
-                    print(f"analizing: {row_below[char_number - 1 : char_number + 2]}")
-                    print(f"char: {char}")
-                    if not char.isdigit() and char != ".":
-                        print(f"below true with: {char}")
-                        is_valid = True
+            row_below = mapped_lines[row_number + 1]
+            for col, char in enumerate(row_below[char_number - 1 : char_number + 2]):
+                absolute_row = row_number
+                absolute_col = col + char_number - 1
+                coord = (absolute_row, absolute_col)
+                if not char.isdigit() and char != ".":
+                    if char == "*":
+                        print(
+                            f"char at: {(absolute_row, absolute_col)} for {current_number}, appending in below"
+                        )
+                        # append if not there
+                        touched_gears_for_number.add(coord)
+
+                    is_valid = True
 
             # check if valid current
-            if not is_valid:
-                row_current = mapped_lines[row_number]
-                left_right = [
-                    row_current[char_number - 1],
-                    row_current[char_number + 1],
-                ]
-                print(f"l/r: {left_right}")
-                # check left
-                for char in left_right:
-                    if not char.isdigit() and char != ".":
-                        is_valid = True
+            row_current = mapped_lines[row_number]
+            left_right = [
+                row_current[char_number - 1],
+                row_current[char_number + 1],
+            ]
+
+            # TODO: split left and right?
+            # check left
+            for col, char in enumerate(left_right):
+                # TODO: this is wrong
+                absolute_row = row_number - 1
+                absolute_col = col + char_number + col
+                coord = (absolute_row, absolute_col)
+                if not char.isdigit() and char != ".":
+                    if char == "*":
+                        print(
+                            f"char at: {(absolute_row, absolute_col)} for {current_number}, appending in same"
+                        )
+                        touched_gears_for_number.add(coord)
+                    is_valid = True
         else:
-            print(f"no longer num with whole num: {current_number}")
             if len(current_number) > 0:
-                if not is_valid:
-                    no_ops.append(current_number)
                 if is_valid:
-                    print(f"valid appending: {current_number}")
+                    print(f"touched: {touched_gears_for_number} for {current_number}")
                     part_numbers.append(int(current_number))
+                    for coord in touched_gears_for_number:
+                        # if exists, add the gear
+                        if coord in touched_gears:
+                            touched_gears[coord].append(int(current_number))
+                        # if not exist, create row
+                        else:
+                            touched_gears[coord] = [int(current_number)]
             current_number = ""
+            touched_gears_for_number = set()
             is_valid = False
 
     # add on any end of rows
     if len(current_number) > 0 and is_valid:
         part_numbers.append(int(current_number))
 
-print(part_numbers)
+        print(f"touched: {touched_gears_for_number} for {current_number}")
+
+        for coord in touched_gears_for_number:
+            # if exists, add the gear
+            if coord in touched_gears:
+                touched_gears[coord].append(int(current_number))
+            # if not exist, create row
+            else:
+                touched_gears[coord] = [int(current_number)]
+
+for key, value in touched_gears.items():
+    if len(value) == 2:
+        print(f"legit gear: {key}: {value}")
+        gear_ratio_sum += value[0] * value[1]
+
 print(sum(part_numbers))
-print(f"no_ops: {no_ops}")
+print(touched_gears)
+print(gear_ratio_sum)
