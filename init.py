@@ -32,4 +32,4 @@ def create_advent_of_code_repo(year):
     print(f"Repository structure for Advent of Code {year} created successfully!")
 
 
-create_advent_of_code_repo(2023)
+create_advent_of_code_repo(2024)
